@@ -1,9 +1,10 @@
-import socket
 import json
+import socket
 import threading
 import time
-import dearpygui.dearpygui as dpg
 from collections import deque
+
+import dearpygui.dearpygui as dpg
 
 
 class SensorDataGUI:
@@ -11,6 +12,24 @@ class SensorDataGUI:
         self.listen_port = listen_port
         self.running = False
         self.sock = None
+
+        # UDP送信用の設定
+        self.send_host = "192.168.1.117"
+        self.send_port = 8887
+        self.send_sock = None
+
+        # サインモード用の設定
+        self.sine_mode_enabled = False
+        self.sine_amplitude = 100
+        self.sine_start_time = None
+        self.auto_send_running = False
+        self.auto_send_thread = None
+
+        # 送信モード設定（最後に押されたボタンによる）
+        self.last_button_pressed = "manual"  # "manual" or "auto"
+        self.manual_speed = 0
+        self.manual_is_running = False
+        self.manual_is_take = False
 
         # データ格納用（実際のArduinoデータ形式に合わせる）
         self.latest_data = {
@@ -46,10 +65,12 @@ class SensorDataGUI:
             "raw_z": deque(maxlen=200),
         }
         self.motor_history = {"angle": deque(maxlen=200), "speed": deque(maxlen=200)}
+        self.command_history = {"speed": deque(maxlen=200)}  # コマンド送信速度の履歴
 
         # GUI要素のID
         self.text_ids = {}
         self.plot_ids = {}
+        self.gui_elements = {}  # GUI要素の参照を保持
 
     def start_udp_receiver(self):
         """UDP受信スレッドを開始"""
@@ -58,12 +79,16 @@ class SensorDataGUI:
         self.sock.bind(("0.0.0.0", self.listen_port))
         self.sock.settimeout(1.0)
 
+        # UDP送信用ソケットも作成
+        self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
         # UDP受信スレッド
         udp_thread = threading.Thread(target=self.udp_receive_loop)
         udp_thread.daemon = True
         udp_thread.start()
 
         print(f"UDP receiver started on port {self.listen_port}")
+        print(f"UDP sender ready to send to {self.send_host}:{self.send_port}")
 
     def udp_receive_loop(self):
         """UDP受信ループ"""
@@ -104,6 +129,103 @@ class SensorDataGUI:
         if "motor" in data:
             self.motor_history["angle"].append(data["motor"]["angle"])
             self.motor_history["speed"].append(data["motor"]["speed"])
+
+        # UDP受信時に自動でコマンドを送信
+        self.auto_send_command_on_receive()
+
+    def auto_send_command_on_receive(self):
+        """UDP受信時に自動でコマンドを送信"""
+        try:
+            if self.last_button_pressed == "auto":
+                # Auto Sendモード：サイン波振幅値を送信
+                if self.sine_mode_enabled:
+                    if self.sine_start_time is None:
+                        self.sine_start_time = time.time()
+                    speed = self.get_sine_speed()
+                else:
+                    speed = 0
+                is_running = True
+                is_take = False
+            else:
+                # Manualモード：設定値をそのまま送信
+                speed = self.manual_speed
+                is_running = self.manual_is_running
+                is_take = self.manual_is_take
+
+            self.send_command(speed, is_running, is_take)
+        except Exception as e:
+            print(f"Auto send command error: {e}")
+
+    def send_command(self, speed, is_running, is_take):
+        """コマンドをUDP送信"""
+        if self.send_sock is None:
+            print("Send socket not initialized")
+            return
+
+        # RPMからrad/sに変換（1 RPM = π/30 rad/s ≈ 0.10472 rad/s）
+        speed_rad_per_sec = speed * 3.14159 / 30.0
+
+        command_data = {
+            "speed": speed_rad_per_sec,
+            "isRunning": is_running,
+            "isTake": is_take,
+        }
+
+        # コマンド速度を履歴に追加（内部的にはRPMのまま）
+        self.command_history["speed"].append(speed)
+
+        try:
+            message = json.dumps(command_data)
+            self.send_sock.sendto(
+                message.encode("utf-8"), (self.send_host, self.send_port)
+            )
+            # print(
+            #     f"Sent command: {message} (RPM: {speed} -> rad/s: {speed_rad_per_sec:.3f})"
+            # )
+        except Exception as e:
+            print(f"UDP send error: {e}")
+
+    def get_sine_speed(self):
+        """サインモードでの速度計算"""
+        if not self.sine_mode_enabled:
+            return 0
+
+        if self.sine_start_time is None:
+            self.sine_start_time = time.time()
+
+        # 3秒で1周期 (2π rad/3s = 2.094 rad/s)
+        elapsed_time = time.time() - self.sine_start_time
+        frequency = 1.0 / 3.0  # 3秒で1周期
+        angle = 2 * 3.14159 * frequency * elapsed_time
+
+        # サイン波で速度を計算 (-amplitude ~ +amplitude)
+        import math
+
+        speed = int(self.sine_amplitude * math.sin(angle))
+        return speed
+
+    def start_auto_send(self, callback):
+        """自動送信を開始"""
+        if not self.auto_send_running:
+            self.auto_send_running = True
+            self.auto_send_thread = threading.Thread(
+                target=self.auto_send_loop, args=(callback,)
+            )
+            self.auto_send_thread.daemon = True
+            self.auto_send_thread.start()
+            print("Auto send started")
+
+    def stop_auto_send(self):
+        """自動送信を停止"""
+        self.auto_send_running = False
+        print("Auto send stopped")
+
+    def auto_send_loop(self, callback):
+        """自動送信ループ"""
+        while self.auto_send_running and self.running:
+            if self.sine_mode_enabled:
+                callback()
+            time.sleep(0.1)  # 100ms間隔
 
     def update_gui(self):
         """GUI表示を更新"""
@@ -228,6 +350,13 @@ class SensorDataGUI:
                 dpg.fit_axis_data("motor_speed_x_axis")
                 dpg.fit_axis_data("motor_speed_y_axis")
 
+            # コマンド速度グラフ更新
+            if len(self.command_history["speed"]) > 0:
+                x_data = list(range(len(self.command_history["speed"])))
+                dpg.set_value(
+                    "command_plot_speed", [x_data, list(self.command_history["speed"])]
+                )
+
         except Exception as e:
             print(f"GUI update error: {e}")
 
@@ -333,7 +462,13 @@ class SensorDataGUI:
                                 dpg.mvYAxis, label="RPM", tag="motor_speed_y_axis"
                             ):
                                 dpg.add_line_series(
-                                    [], [], label="Speed", tag="motor_plot_speed"
+                                    [], [], label="Motor Speed", tag="motor_plot_speed"
+                                )
+                                dpg.add_line_series(
+                                    [],
+                                    [],
+                                    label="Command Speed",
+                                    tag="command_plot_speed",
                                 )
 
         # データ表示ウィンドウ（数値専用）
@@ -379,6 +514,97 @@ class SensorDataGUI:
 
             dpg.add_separator()
 
+            # コマンド送信セクション
+            with dpg.collapsing_header(label="Send Command", default_open=True):
+                # Manual Mode設定
+                with dpg.collapsing_header(
+                    label="Manual Mode Settings", default_open=True
+                ):
+                    dpg.add_text("Manual Speed:")
+                    speed_input = dpg.add_input_int(
+                        label="##speed",
+                        default_value=0,
+                        min_value=-1000,
+                        max_value=1000,
+                    )
+
+                    # チェックボックス
+                    is_running_checkbox = dpg.add_checkbox(
+                        label="isRunning", default_value=False
+                    )
+                    is_take_checkbox = dpg.add_checkbox(
+                        label="isTake", default_value=False
+                    )
+
+                    # GUI要素の参照を保存
+                    self.gui_elements["speed_input"] = speed_input
+                    self.gui_elements["is_running_checkbox"] = is_running_checkbox
+                    self.gui_elements["is_take_checkbox"] = is_take_checkbox
+
+                    # Manual送信ボタン
+                    def manual_send_callback():
+                        self.last_button_pressed = "manual"
+                        self.manual_speed = dpg.get_value(speed_input)
+                        self.manual_is_running = dpg.get_value(is_running_checkbox)
+                        self.manual_is_take = dpg.get_value(is_take_checkbox)
+                        self.send_command(
+                            self.manual_speed,
+                            self.manual_is_running,
+                            self.manual_is_take,
+                        )
+                        print(f"Manual mode activated - Speed: {self.manual_speed}")
+
+                    dpg.add_button(
+                        label="Send Manual Command", callback=manual_send_callback
+                    )
+
+                dpg.add_separator()
+
+                # Auto Send Mode設定
+                with dpg.collapsing_header(
+                    label="Auto Send Mode Settings", default_open=True
+                ):
+                    dpg.add_text("Sine Mode:")
+                    sine_mode_checkbox = dpg.add_checkbox(
+                        label="Enable Sine Mode", default_value=False
+                    )
+
+                    dpg.add_text("Sine Amplitude:")
+                    sine_amplitude_input = dpg.add_input_int(
+                        label="##sine_amplitude",
+                        default_value=100,
+                        min_value=0,
+                        max_value=1000,
+                    )
+
+                    # 現在の速度表示
+                    current_speed_text = dpg.add_text("Current Speed: 0")
+
+                    # Auto Send Mode設定更新関数
+                    def activate_auto_mode():
+                        self.last_button_pressed = "auto"
+
+                        # Auto Send Mode設定を更新
+                        self.sine_mode_enabled = dpg.get_value(sine_mode_checkbox)
+                        self.sine_amplitude = dpg.get_value(sine_amplitude_input)
+
+                        if self.sine_mode_enabled:
+                            if self.sine_start_time is None:
+                                self.sine_start_time = time.time()
+                            speed = self.get_sine_speed()
+                            dpg.set_value(current_speed_text, f"Current Speed: {speed}")
+
+                        print(
+                            f"Auto mode activated - Sine enabled: {self.sine_mode_enabled}, Amplitude: {self.sine_amplitude}"
+                        )
+
+                    # Auto Send Mode有効化ボタン
+                    dpg.add_button(
+                        label="Activate Auto Send Mode", callback=activate_auto_mode
+                    )
+
+            dpg.add_separator()
+
             # モーターデータ
             with dpg.collapsing_header(label="Motor", default_open=True):
                 self.text_ids["motor_angle"] = dpg.add_text("Angle: 0°")
@@ -409,8 +635,11 @@ class SensorDataGUI:
 
         # クリーンアップ
         self.running = False
+        self.auto_send_running = False
         if self.sock:
             self.sock.close()
+        if self.send_sock:
+            self.send_sock.close()
         dpg.destroy_context()
 
 
