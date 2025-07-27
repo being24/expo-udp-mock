@@ -166,7 +166,7 @@ class SensorDataGUI:
         speed_rad_per_sec = speed * 3.14159 / 30.0
 
         command_data = {
-            "speed": speed_rad_per_sec,
+            "angular_velocity": speed_rad_per_sec,
             "isRunning": is_running,
             "isTake": is_take,
         }
