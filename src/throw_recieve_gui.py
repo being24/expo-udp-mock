@@ -147,7 +147,8 @@ class SensorDataGUI:
         # self.auto_send_command_on_receive()
 
         # DB保存処理
-        asyncio.run(self.db_manager.save_sensor_data(self.latest_data))
+        if self.save_to_db_enabled:
+            asyncio.run(self.db_manager.save_sensor_data(self.latest_data))
 
     def auto_send_command_on_receive(self):
         """UDP受信時に自動でコマンドを送信"""
@@ -679,7 +680,7 @@ class SensorDataGUI:
 def main():
     print("Sensor Data Monitor - Starting...")
 
-    monitor = SensorDataGUI(listen_port=8888)
+    monitor = SensorDataGUI()
 
     try:
         monitor.run()
