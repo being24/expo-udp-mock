@@ -8,7 +8,7 @@ from collections import deque
 
 import dearpygui.dearpygui as dpg
 
-from throw_data_manager import SensorDataManager
+from throw_data_manager import ThrowDataManager
 
 
 class SensorDataGUI:
@@ -80,7 +80,7 @@ class SensorDataGUI:
         self.save_to_db_enabled = False
 
         # DBマネージャーの初期化
-        self.db_manager = SensorDataManager()
+        self.db_manager = ThrowDataManager()
 
         self.received_data_queue = queue.Queue()
 

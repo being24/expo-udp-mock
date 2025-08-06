@@ -103,7 +103,7 @@ class SensorDataDB(Base):
         from_attributes = True
 
 
-class SensorDataManager:
+class ThrowDataManager:
     """センサーデータの管理クラス"""
 
     async def create_table(self) -> None:
@@ -321,7 +321,7 @@ class SensorDataManager:
 if __name__ == "__main__":
     # テスト用のコード
     async def test_sensor_data_manager():
-        manager = SensorDataManager()
+        manager = ThrowDataManager()
         await manager.create_table()
 
         # テストデータ
