@@ -8,18 +8,18 @@ from collections import deque
 
 import dearpygui.dearpygui as dpg
 
-from sensor_data_manager import SensorDataManager
+from throw_data_manager import SensorDataManager
 
 
 class SensorDataGUI:
-    def __init__(self, listen_port=8888):
+    def __init__(self, listen_port=9001):
         self.listen_port = listen_port
         self.running = False
         self.sock = None
 
         # UDP送信用の設定
         self.send_host = "127.0.0.1"
-        self.send_port = 8887
+        self.send_port = 9000
         self.send_sock = None
 
         # サインモード用の設定
