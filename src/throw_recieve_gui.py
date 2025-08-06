@@ -14,7 +14,7 @@ class SensorDataGUI:
         self.sock = None
 
         # UDP送信用の設定
-        self.send_host = "192.168.1.117"
+        self.send_host = "127.0.0.1"
         self.send_port = 8887
         self.send_sock = None
 

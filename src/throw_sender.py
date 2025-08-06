@@ -7,7 +7,7 @@ import math
 
 
 class M5StackMock:
-    def __init__(self, listen_port=8889, target_host="127.0.0.1", target_port=8888):
+    def __init__(self, listen_port=8887, target_host="127.0.0.1", target_port=8888):
         self.listen_port = listen_port
         self.target_host = target_host
         self.target_port = target_port
@@ -20,9 +20,14 @@ class M5StackMock:
         """M5Stackモックを開始"""
         self.running = True
         self.start_time = time.time()
+
+        # 受信用ソケット
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(("0.0.0.0", self.listen_port))
         self.sock.settimeout(1.0)
+
+        # 送信用ソケット
+        self.send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # 受信スレッドを開始
         receive_thread = threading.Thread(target=self.receive_commands)
@@ -132,11 +137,10 @@ class M5StackMock:
             }
 
             try:
-                # message = json.dumps(sensor_data)  # 送信しないのでコメントアウト
-                # UDP送信を無効化（ローカルでのテスト用）
-                # self.sock.sendto(
-                #     message.encode("utf-8"), (self.target_host, self.target_port)
-                # )
+                message = json.dumps(sensor_data)
+                self.send_sock.sendto(
+                    message.encode("utf-8"), (self.target_host, self.target_port)
+                )
 
                 # 100回に1回、詳細情報を表示
                 if self.counter % 100 == 0:
@@ -204,6 +208,8 @@ class M5StackMock:
         self.running = False
         if self.sock:
             self.sock.close()
+        if hasattr(self, "send_sock") and self.send_sock:
+            self.send_sock.close()
 
 
 def main():

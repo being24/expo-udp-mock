@@ -4,7 +4,7 @@ from pprint import PrettyPrinter
 
 
 class UnityMock:
-    def __init__(self, listen_port=8887, target_host="127.0.0.1", target_port=8888):
+    def __init__(self, listen_port=8888, target_host="127.0.0.1", target_port=8887):
         self.listen_port = listen_port
         self.target_host = target_host
         self.target_port = target_port
