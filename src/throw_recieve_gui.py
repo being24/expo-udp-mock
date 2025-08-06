@@ -1,10 +1,14 @@
+import asyncio
 import json
+import queue
 import socket
 import threading
 import time
 from collections import deque
 
 import dearpygui.dearpygui as dpg
+
+from sensor_data_manager import SensorDataManager
 
 
 class SensorDataGUI:
@@ -72,6 +76,14 @@ class SensorDataGUI:
         self.plot_ids = {}
         self.gui_elements = {}  # GUI要素の参照を保持
 
+        # データ保存フラグ
+        self.save_to_db_enabled = False
+
+        # DBマネージャーの初期化
+        self.db_manager = SensorDataManager()
+
+        self.received_data_queue = queue.Queue()
+
     def start_udp_receiver(self):
         """UDP受信スレッドを開始"""
         self.running = True
@@ -100,6 +112,7 @@ class SensorDataGUI:
                 try:
                     json_data = json.loads(message)
                     self.update_data(json_data)
+
                 except json.JSONDecodeError:
                     print(f"Invalid JSON received: {message[:100]}...")
 
@@ -131,7 +144,10 @@ class SensorDataGUI:
             self.motor_history["speed"].append(data["motor"]["speed"])
 
         # UDP受信時に自動でコマンドを送信
-        self.auto_send_command_on_receive()
+        # self.auto_send_command_on_receive()
+
+        # DB保存処理
+        asyncio.run(self.db_manager.save_sensor_data(self.latest_data))
 
     def auto_send_command_on_receive(self):
         """UDP受信時に自動でコマンドを送信"""
@@ -612,6 +628,23 @@ class SensorDataGUI:
                 self.text_ids["motor_current"] = dpg.add_text("Current: 0.000 A")
                 self.text_ids["motor_temp"] = dpg.add_text("Temp: 0°C")
                 self.text_ids["motor_torque"] = dpg.add_text("Torque: 0")
+
+        with dpg.window(
+            label="Data Save Control",
+            tag="SaveControlWindow",
+            width=400,
+            height=100,
+            pos=[1450, 700],
+        ):
+
+            def save_checkbox_callback(sender, app_data):
+                self.save_to_db_enabled = app_data
+
+            dpg.add_checkbox(
+                label="Save Received Data to DB",
+                default_value=False,
+                callback=save_checkbox_callback,
+            )
 
         dpg.bind_font(default_font)
 
