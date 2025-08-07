@@ -27,6 +27,7 @@ class SweepReceiveGUI:
         self.text_ids = {}
         self.save_to_db_enabled = False
         self.db_manager = SweepDataManager()
+        asyncio.run(self.db_manager.create_table())
         self.counter = 0
 
     def start_udp_receiver(self):
@@ -91,7 +92,11 @@ class SweepReceiveGUI:
     def create_gui(self):
         dpg.create_context()
         with dpg.font_registry():
-            default_font = dpg.add_font("c:/windows/fonts/msgothic.ttc", 16)
+            # data/Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf
+            default_font = dpg.add_font(
+                "data/Noto_Sans_JP/static/NotoSansJP-Bold.ttf", 24
+            )
+
         with dpg.window(label="Sweep Sensor Data", tag="Primary Window"):
             with dpg.group():
                 self.text_ids["ax"] = dpg.add_text("ax: 0.0000")

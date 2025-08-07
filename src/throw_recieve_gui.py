@@ -82,6 +82,8 @@ class SensorDataGUI:
         # DBマネージャーの初期化
         self.db_manager = ThrowDataManager()
 
+        asyncio.run(self.db_manager.create_table())
+
         self.received_data_queue = queue.Queue()
 
     def start_udp_receiver(self):
@@ -383,7 +385,10 @@ class SensorDataGUI:
 
         # フォント設定（日本語対応）
         with dpg.font_registry():
-            default_font = dpg.add_font("c:/windows/fonts/msgothic.ttc", 16)
+            # data/Noto_Sans_JP/NotoSansJP-VariableFont_wght.ttf
+            default_font = dpg.add_font(
+                "data/Noto_Sans_JP/static/NotoSansJP-Bold.ttf", size=24
+            )
 
         # メインウィンドウ（グラフ表示専用）
         with dpg.window(label="Sensor Data Graphs", tag="Primary Window"):
