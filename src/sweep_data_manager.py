@@ -102,6 +102,18 @@ class SweepDataManager:
 
                 return [self.convert_db_to_model(row) for row in rows]
 
+    async def get_all_data(self) -> list[SweepDataModel]:
+        async with AsyncSession(engine, expire_on_commit=True) as session:
+            async with session.begin():
+                stmt = select(SweepDataDB)
+                result = await session.execute(stmt)
+                rows = result.fetchall()
+
+                if not rows:
+                    return []
+
+                return [self.convert_db_to_model(row) for row in rows]
+
 
 if __name__ == "__main__":
 

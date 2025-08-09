@@ -317,6 +317,14 @@ class ThrowDataManager:
                 result = await session.execute(stmt)
                 return len(result.fetchall())
 
+    async def get_all_data(self) -> List[SensorDataModel]:
+        async with AsyncSession(engine, expire_on_commit=True) as session:
+            async with session.begin():
+                stmt = select(SensorDataDB)
+                result = await session.execute(stmt)
+                rows = result.fetchall()
+                return [self.convert_db_to_model(row) for row in rows]
+
 
 if __name__ == "__main__":
     # テスト用のコード
