@@ -37,7 +37,7 @@ class SensorDataModel(BaseModel):
 
     # モーターデータ
     motor_angle: float
-    motor_speed: int  # RPM
+    motor_speed: float  # RPM
     motor_current: float  # アンペア
     motor_temp: int  # 摂氏
     motor_torque: int
@@ -77,7 +77,7 @@ class SensorDataDB(Base):
 
     # モーターデータ
     motor_angle = Column(Float, nullable=False)
-    motor_speed = Column(Integer, nullable=False)  # RPM
+    motor_speed = Column(Float, nullable=False)  # RPM
     motor_current = Column(Float, nullable=False)  # アンペア
     motor_temp = Column(Integer, nullable=False)  # 摂氏
     motor_torque = Column(Integer, nullable=False)
