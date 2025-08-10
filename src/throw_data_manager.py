@@ -192,10 +192,13 @@ class ThrowDataManager:
         Args:
             json_data (dict): 受信したJSONデータ
         """
+        print(f"Saving sensor data: {json_data['gyro']}")
         async with AsyncSession(engine) as session:
             async with session.begin():
                 sensor_model = self.convert_json_to_model(json_data)
+                print(f"Converted sensor model: {sensor_model.gyro_z}")
                 db_data = self.convert_model_to_db(sensor_model)
+                print(f"DB data gyro_z: {db_data.gyro_z}")
                 session.add(db_data)
 
     async def get_latest_data(self, limit: int = 100) -> List[SensorDataModel] | None:
