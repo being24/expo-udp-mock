@@ -73,6 +73,10 @@ def main():
 
     print(f"全データ件数: {len(all_data)}")
 
+    # データの周期を表示
+    data_hz = 1 / np.mean(np.diff(x_axis)) if len(x_axis) > 1 else 0
+    print(f"データの周期: {data_hz:.2f} Hz")
+
 
 if __name__ == "__main__":
     main()
