@@ -122,28 +122,28 @@ class ThrowDataManager:
             SensorDataModel: Pydanticモデルのインスタンス
         """
         return SensorDataModel(
-            timestamp=json_data["timestamp"],
-            counter=json_data["counter"],
+            timestamp=int(json_data["timestamp"]),
+            counter=int(json_data["counter"]),
             # モーターデータ
-            motor_angle=json_data["motor"]["angle"],
-            motor_speed=json_data["motor"]["speed"],
-            motor_current=json_data["motor"]["current"],
-            motor_temp=json_data["motor"]["temp"],
-            motor_torque=json_data["motor"]["torque"],
+            motor_angle=float(json_data["motor"]["angle"]),
+            motor_speed=float(json_data["motor"]["speed"]),
+            motor_current=float(json_data["motor"]["current"]),
+            motor_temp=int(json_data["motor"]["temp"]),
+            motor_torque=int(json_data["motor"]["torque"]),
             # 制御データ
-            control_target_rpm=json_data["control"]["target_rpm"],
-            control_current_rpm=json_data["control"]["current_rpm"],
-            control_output_current=json_data["control"]["output_current"],
-            control_error=json_data["control"]["error"],
+            control_target_rpm=int(json_data["control"]["target_rpm"]),
+            control_current_rpm=float(json_data["control"]["current_rpm"]),
+            control_output_current=float(json_data["control"]["output_current"]),
+            control_error=float(json_data["control"]["error"]),
             # 加速度データ
-            accel_x=json_data["accel"]["x"],
-            accel_y=json_data["accel"]["y"],
-            accel_z=json_data["accel"]["z"],
+            accel_x=float(json_data["accel"]["x"]),
+            accel_y=float(json_data["accel"]["y"]),
+            accel_z=float(json_data["accel"]["z"]),
             # ジャイロデータ
-            gyro_x=json_data["gyro"]["x"],
-            gyro_y=json_data["gyro"]["y"],
-            gyro_z=json_data["gyro"]["z"],
-            gyro_raw_z=json_data["gyro"]["raw_z"],
+            gyro_x=float(json_data["gyro"]["x"]),
+            gyro_y=float(json_data["gyro"]["y"]),
+            gyro_z=float(json_data["gyro"]["z"]),
+            gyro_raw_z=float(json_data["gyro"]["raw_z"]),
         )
 
     @staticmethod
