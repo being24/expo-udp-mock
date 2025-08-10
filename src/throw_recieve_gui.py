@@ -141,8 +141,6 @@ class SensorDataGUI:
             if "raw_z" in data["gyro"]:
                 self.gyro_history["raw_z"].append(data["gyro"]["raw_z"])
 
-            print(f"Gyro Z: {data['gyro']['z']}")
-
         if "motor" in data:
             self.motor_history["angle"].append(data["motor"]["angle"])
             self.motor_history["speed"].append(data["motor"]["speed"])
