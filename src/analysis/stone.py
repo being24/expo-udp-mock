@@ -23,14 +23,14 @@ def lowpass_filter(data, alpha=0.5):
 def convert_and_trim(raw_vel: float) -> float:
     TIMES = 2.5
     double_vel = raw_vel * TIMES
-    # もし、raw_velを2倍した値が2.2を下回るならば、2,2にトリム
+    # もし、raw_velをTIMES倍した値が2.2を下回るならば、2,2にトリム
     if double_vel < 2.2:
         return 2.2
-    # raw_velを2倍した値が4.0を上回るならば、4.0にトリム
+    # raw_velをTIMES倍した値が4.0を上回るならば、4.0にトリム
     elif double_vel > 4.0:
         return 4.0
 
-    # それ以外はそのまま2倍して返す
+    # それ以外はそのままTIMES倍して返す
     return double_vel
 
 
