@@ -254,15 +254,15 @@ class SensorDataGUI:
             # 加速度データ更新
             dpg.set_value(
                 self.text_ids["accel_x"],
-                f"X: {self.latest_data['accel']['x']:.3f} m/s²",
+                f"X: {self.latest_data['accel']['x']:.3f} G",
             )
             dpg.set_value(
                 self.text_ids["accel_y"],
-                f"Y: {self.latest_data['accel']['y']:.3f} m/s²",
+                f"Y: {self.latest_data['accel']['y']:.3f} G",
             )
             dpg.set_value(
                 self.text_ids["accel_z"],
-                f"Z: {self.latest_data['accel']['z']:.3f} m/s²",
+                f"Z: {self.latest_data['accel']['z']:.3f} G",
             )
 
             # ジャイロデータ更新
@@ -400,7 +400,7 @@ class SensorDataGUI:
                 with dpg.group():
                     # 加速度セクション
                     with dpg.collapsing_header(
-                        label="Acceleration (m/s²)", default_open=True
+                        label="Acceleration (G)", default_open=True
                     ):
                         # 加速度グラフ（大きくする）
                         with dpg.plot(label="Acceleration Plot", height=300, width=700):
@@ -409,7 +409,7 @@ class SensorDataGUI:
                                 dpg.mvXAxis, label="Time", tag="accel_x_axis"
                             )
                             with dpg.plot_axis(
-                                dpg.mvYAxis, label="m/s²", tag="accel_y_axis"
+                                dpg.mvYAxis, label="G", tag="accel_y_axis"
                             ):
                                 dpg.add_line_series(
                                     [], [], label="X", tag="accel_plot_x"
@@ -512,9 +512,9 @@ class SensorDataGUI:
 
             # 加速度データ
             with dpg.collapsing_header(label="Acceleration", default_open=True):
-                self.text_ids["accel_x"] = dpg.add_text("X: 0.000 m/s²")
-                self.text_ids["accel_y"] = dpg.add_text("Y: 0.000 m/s²")
-                self.text_ids["accel_z"] = dpg.add_text("Z: 0.000 m/s²")
+                self.text_ids["accel_x"] = dpg.add_text("X: 0.000 G")
+                self.text_ids["accel_y"] = dpg.add_text("Y: 0.000 G")
+                self.text_ids["accel_z"] = dpg.add_text("Z: 0.000 G")
 
             dpg.add_separator()
 

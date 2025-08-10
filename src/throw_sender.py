@@ -148,7 +148,7 @@ class M5StackMock:
                         f"[M5Stack] #{self.counter}: motor_angle={angle_deg:.3f}°, speed={speed_rpm}rpm, temp={temp}°C"
                     )
                     print(
-                        f"           accel=({accel_x:.3f}, {accel_y:.3f}, {accel_z:.3f}) m/s²"
+                        f"           accel=({accel_x:.3f}, {accel_y:.3f}, {accel_z:.3f}) G"
                     )
                     print(
                         f"           gyro=({gyro_x:.3f}, {gyro_y:.3f}, {gyro_z:.3f}) deg/s"

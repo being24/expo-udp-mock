@@ -108,7 +108,7 @@ class SweepReceiveGUI:
             with dpg.plot(label="Acceleration Plot", height=300, width=700):
                 dpg.add_plot_legend()
                 dpg.add_plot_axis(dpg.mvXAxis, label="Time", tag="ax_axis")
-                with dpg.plot_axis(dpg.mvYAxis, label="m/s²", tag="ay_axis"):
+                with dpg.plot_axis(dpg.mvYAxis, label="G", tag="ay_axis"):
                     dpg.add_line_series([], [], label="ax", tag="ax_plot")
                     dpg.add_line_series([], [], label="ay", tag="ay_plot")
                     dpg.add_line_series([], [], label="az", tag="az_plot")

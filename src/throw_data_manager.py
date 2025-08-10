@@ -48,7 +48,7 @@ class SensorDataModel(BaseModel):
     control_output_current: float
     control_error: float
 
-    # 加速度データ (m/s²)
+    # 加速度データ (G
     accel_x: float
     accel_y: float
     accel_z: float
@@ -88,7 +88,7 @@ class SensorDataDB(Base):
     control_output_current = Column(Float, nullable=False)
     control_error = Column(Float, nullable=False)
 
-    # 加速度データ (m/s²)
+    # 加速度データ (G)
     accel_x = Column(Float, nullable=False)
     accel_y = Column(Float, nullable=False)
     accel_z = Column(Float, nullable=False)
