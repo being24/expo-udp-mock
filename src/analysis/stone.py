@@ -21,7 +21,7 @@ def lowpass_filter(data, alpha=0.5):
 
 # 変換とトリム
 def convert_and_trim(raw_vel: float) -> float:
-    TIMES = 2.5
+    TIMES = 4
     double_vel = raw_vel * TIMES
     # もし、raw_velをTIMES倍した値が2.2を下回るならば、2,2にトリム
     if double_vel < 2.2:
@@ -61,7 +61,7 @@ def main():
         data_queue.append(data)
 
         # data.accel_xが0.8を超えたら、data.accel_xが負になるまでデータをまって
-        if data.accel_x > 0.8:
+        if data.accel_x > 0.2:
             over_flag = True
             counter = 0
 
@@ -163,9 +163,10 @@ def main():
 
     # xlim
     # plt.xlim(402, 404)
+    axs[1].set_ylim(-0.5, 0.5)
 
     print("Plot saved as stone_plot.svg")
-    plt.savefig(graph_save_path / "stone_plot.svg")
+    plt.savefig(graph_save_path / "stone_plot.png")
 
     print(f"全データ件数: {len(all_data)}")
 
