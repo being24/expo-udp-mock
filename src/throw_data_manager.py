@@ -1,3 +1,4 @@
+import pathlib
 import asyncio
 from datetime import datetime
 from typing import Optional, List
@@ -11,7 +12,7 @@ from sqlalchemy.sql.sqltypes import Float, Integer, DateTime
 from sqlalchemy.types import BigInteger
 
 try:
-    from .db import engine
+    from .db import get_engine_by_path
 except ImportError:
     import sys
     import pathlib
@@ -19,7 +20,7 @@ except ImportError:
     # 相対パスでdbモジュールをインポート
     current_dir = pathlib.Path(__file__).parent
     sys.path.append(str(current_dir))
-    from db import engine
+    from db import get_engine_by_path
 
 Base = declarative_base()
 
@@ -104,11 +105,18 @@ class SensorDataDB(Base):
 
 
 class ThrowDataManager:
-    """センサーデータの管理クラス"""
+    """センサーデータの管理クラス（複数DB対応）"""
+
+    def __init__(self, db_path: Optional[pathlib.Path] = None):
+        if db_path is None:
+            # デフォルトDB
+            project_root = pathlib.Path(__file__).parents[1]
+            db_path = project_root / "data" / "sensor_data.sqlite3"
+        self.engine = get_engine_by_path(db_path)
 
     async def create_table(self) -> None:
         """テーブルを作成する関数"""
-        async with engine.begin() as conn:
+        async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
     @staticmethod
@@ -192,14 +200,14 @@ class ThrowDataManager:
         Args:
             json_data (dict): 受信したJSONデータ
         """
-        async with AsyncSession(engine) as session:
+        async with AsyncSession(self.engine) as session:
             async with session.begin():
                 sensor_model = self.convert_json_to_model(json_data)
                 db_data = self.convert_model_to_db(sensor_model)
                 session.add(db_data)
 
     async def get_latest_data(self, limit: int = 100) -> List[SensorDataModel] | None:
-        async with AsyncSession(engine, expire_on_commit=True) as session:
+        async with AsyncSession(self.engine, expire_on_commit=True) as session:
             async with session.begin():
                 stmt = (
                     select(SensorDataDB)
@@ -227,7 +235,7 @@ class ThrowDataManager:
         Returns:
             List[SensorDataModel] | None: センサーデータのリスト、存在しない場合はNone
         """
-        async with AsyncSession(engine, expire_on_commit=True) as session:
+        async with AsyncSession(self.engine, expire_on_commit=True) as session:
             async with session.begin():
                 stmt = (
                     select(SensorDataDB)
@@ -257,7 +265,7 @@ class ThrowDataManager:
         Returns:
             List[SensorDataModel] | None: センサーデータのリスト、存在しない場合はNone
         """
-        async with AsyncSession(engine, expire_on_commit=True) as session:
+        async with AsyncSession(self.engine, expire_on_commit=True) as session:
             async with session.begin():
                 stmt = (
                     select(SensorDataDB)
@@ -284,7 +292,7 @@ class ThrowDataManager:
         Returns:
             int: 削除された件数
         """
-        async with AsyncSession(engine) as session:
+        async with AsyncSession(self.engine) as session:
             async with session.begin():
                 # 保持すべき最小のIDを取得
                 subquery = (
@@ -311,14 +319,14 @@ class ThrowDataManager:
         Returns:
             int: データの総数
         """
-        async with AsyncSession(engine, expire_on_commit=True) as session:
+        async with AsyncSession(self.engine, expire_on_commit=True) as session:
             async with session.begin():
                 stmt = select(SensorDataDB.id)
                 result = await session.execute(stmt)
                 return len(result.fetchall())
 
     async def get_all_data(self) -> List[SensorDataModel]:
-        async with AsyncSession(engine, expire_on_commit=True) as session:
+        async with AsyncSession(self.engine, expire_on_commit=True) as session:
             async with session.begin():
                 stmt = select(SensorDataDB)
                 result = await session.execute(stmt)
@@ -329,8 +337,14 @@ class ThrowDataManager:
 if __name__ == "__main__":
     # テスト用のコード
     async def test_sensor_data_manager():
+        # デフォルトDB
         manager = ThrowDataManager()
         await manager.create_table()
+
+        # 別DB例
+        # from pathlib import Path
+        # manager2 = ThrowDataManager(Path("data/sensor_data_STONE2.sqlite3"))
+        # await manager2.create_table()
 
         # テストデータ
         test_json = {

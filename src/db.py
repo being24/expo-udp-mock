@@ -52,6 +52,15 @@ class DatabaseConfig:
         }
 
 
+# PathオブジェクトからAsyncEngineを返す関数
+def get_engine_by_path(db_path: pathlib.Path) -> AsyncEngine:
+    """
+    指定されたPathオブジェクトのSQLite DBに接続するAsyncEngineを返す
+    """
+    db_url = f"sqlite+aiosqlite:///{db_path}"
+    return create_async_engine(db_url, echo=False)
+
+
 # デフォルトのデータベース設定インスタンス
 db_config = DatabaseConfig()
 
